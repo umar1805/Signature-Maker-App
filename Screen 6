@@ -1,0 +1,54 @@
+class CustomizeScreen extends StatefulWidget {
+  final SignatureDesign signature;
+  const CustomizeScreen({super.key, required this.signature});
+  @override
+  State<CustomizeScreen> createState() => _CustomizeScreenState();
+}
+class _CustomizeScreenState extends State<CustomizeScreen> {
+  late Color color; late double thickness;
+  bool transparent = false;
+  @override
+  void initState() { super.initState(); color = widget.signature.color; thickness = widget.signature.thickness; }
+  SignatureDesign get updated => SignatureDesign(strokes: widget.signature.strokes, color: color, thickness: thickness, createdAt: widget.signature.createdAt);
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Customize signature', style: TextStyle(fontWeight: FontWeight.w900))),
+    body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const ScreenTitle('Make it yours.', 'Fine-tune the look of your signature before previewing it.'),
+        const SizedBox(height: 20),
+        Expanded(child: Container(width: double.infinity, decoration: BoxDecoration(
+            color: transparent ? const Color(0xFFF1F5F9) : Colors.white, borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFE0E6F0))),
+            child: ClipRRect(borderRadius: BorderRadius.circular(22), child: CustomPaint(
+              painter: SignaturePainter(strokes: widget.signature.strokes, active: const [], color: color, thickness: thickness),
+              child: Center(child: Text('LIVE PREVIEW', style: TextStyle(color: navy.withValues(alpha: .22), fontSize: 9, letterSpacing: 2, fontWeight: FontWeight.w800))),
+            )))),
+        const SizedBox(height: 17),
+        Container(padding: const EdgeInsets.all(17), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE7EBF3))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Signature color', style: TextStyle(color: navy, fontWeight: FontWeight.w900, fontSize: 13)),
+              const SizedBox(height: 13),
+              Row(children: [
+                _largeDot(navy), _largeDot(const Color(0xFF2563EB)), _largeDot(teal), _largeDot(const Color(0xFFDC2626)), _largeDot(const Color(0xFF111827)),
+              ]),
+              const SizedBox(height: 18),
+              Row(children: [const Text('Pen thickness', style: TextStyle(color: navy, fontWeight: FontWeight.w900, fontSize: 13)),
+                const Spacer(), Text('${thickness.toStringAsFixed(1)} px', style: const TextStyle(color: Color(0xFF64748B), fontSize: 11))]),
+              Slider(value: thickness, min: 1.5, max: 7, divisions: 11, activeColor: violet, onChanged: (v) => setState(() => thickness = v)),
+              SwitchListTile(contentPadding: EdgeInsets.zero, dense: true, activeColor: violet,
+                  title: const Text('Preview on soft background', style: TextStyle(color: navy, fontSize: 12, fontWeight: FontWeight.w700)),
+                  subtitle: const Text('Toggle the preview surface', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                  value: transparent, onChanged: (v) => setState(() => transparent = v)),
+            ])),
+        const SizedBox(height: 15),
+        PrimaryButton(text: 'Continue to preview', icon: Icons.arrow_forward_rounded,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PreviewScreen(signature: updated)))),
+      ]),
+    )),
+  );
+  Widget _largeDot(Color c) => GestureDetector(onTap: () => setState(() => color = c),
+      child: Container(width: 37, height: 37, margin: const EdgeInsets.only(right: 13),
+          decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: color == c ? violet : const Color(0xFFE2E8F0), width: color == c ? 3 : 1)),
+          child: color == c ? const Icon(Icons.check_rounded, color: Colors.white, size: 17) : null));
+}
