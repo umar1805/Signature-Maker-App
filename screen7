@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+
+class PreviewScreen extends StatelessWidget {
+  final dynamic signature;
+  final bool fromSaved;
+
+  const PreviewScreen({super.key, required this.signature, this.fromSaved = false});
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF0F172A);
+    const teal = Color(0xFF0D9488);
+    const violet = Color(0xFF7C3AED);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Signature preview', style: TextStyle(fontWeight: FontWeight.w900)),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 9, 20, 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 22),
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxHeight: 310),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFE0E6F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: navy.withOpacity(0.04), // Error-free opacity method
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: const Center(
+                        child: Text(
+                          'YOUR SIGNATURE',
+                          style: TextStyle(
+                            color: Color(0x3394A3B8),
+                            fontSize: 10,
+                            letterSpacing: 3,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: const Color(0xFFE7EBF3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_rounded, color: teal),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Your signature preview is ready.',
+                        style: TextStyle(color: navy, fontWeight: FontWeight.w700, fontSize: 12),
+                      ),
+                    ),
+                    Text('${signature?.strokes?.length ?? 0} strokes', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 15),
+              if (!fromSaved) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Signature added to My Signatures.')),
+                      );
+                      Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.bookmark_add_rounded, color: Colors.white),
+                    label: const Text('Save to My Signatures', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: violet,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: const Text('Edit design'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: violet,
+                      side: const BorderSide(color: Color(0xFFD9D6FE)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.folder_open_rounded, color: Colors.white),
+                    label: const Text('Back to My Signatures', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    styale: ElevatedButton.styleFrom(
+                      backgroundColor: violet,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
