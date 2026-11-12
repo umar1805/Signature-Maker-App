@@ -1,0 +1,113 @@
+
+class DrawScreen extends StatefulWidget {
+  const DrawScreen({super.key});
+  @override
+  State<DrawScreen> createState() => _DrawScreenState();
+}
+class _DrawScreenState extends State<DrawScreen> {
+  final List<List<Offset>> _strokes = [];
+  List<Offset> _active = [];
+  Color _color = navy;
+  double _width = 3.2;
+  void _undo() { setState(() { if (_active.isNotEmpty) { _active = []; } else if (_strokes.isNotEmpty) { _strokes.removeLast(); } }); }
+  void _clear() => setState(() { _strokes.clear(); _active.clear(); });
+  void _save() {
+    if (_strokes.isEmpty && _active.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please draw your signature first.')));
+      return;
+    }
+    final all = [..._strokes, if (_active.isNotEmpty) List<Offset>.from(_active)];
+    final design = SignatureDesign(strokes: all.map((s) => List<Offset>.from(s)).toList(), color: _color, thickness: _width);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => CustomizeScreen(signature: design)));
+  }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Draw signature', style: TextStyle(fontWeight: FontWeight.w900)),
+        actions: [IconButton(tooltip: 'Undo', onPressed: _undo, icon: const Icon(Icons.undo_rounded)),
+          IconButton(tooltip: 'Clear', onPressed: _clear, icon: const Icon(Icons.delete_outline_rounded)), const SizedBox(width: 5)]),
+    body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 5, 18, 17),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const ScreenTitle('Put your mark on it.', 'Draw inside the canvas using your finger or a stylus.'),
+        const SizedBox(height: 15),
+        Expanded(child: Container(width: double.infinity,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFDDE3F0)),
+              boxShadow: [BoxShadow(color: navy.withValues(alpha: .04), blurRadius: 18, offset: const Offset(0, 7))]),
+          child: ClipRRect(borderRadius: BorderRadius.circular(21),
+            child: LayoutBuilder(builder: (context, constraints) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanStart: (d) => setState(() => _active = [d.localPosition]),
+              onPanUpdate: (d) => setState(() => _active.add(d.localPosition)),
+              onPanEnd: (_) => setState(() { if (_active.isNotEmpty) _strokes.add(List<Offset>.from(_active)); _active = []; }),
+              child: Stack(children: [
+                if (_strokes.isEmpty && _active.isEmpty) const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.gesture_rounded, size: 40, color: Color(0xFFCBD5E1)), SizedBox(height: 9),
+                  Text('Sign here', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w700)),
+                  SizedBox(height: 4), Text('Use your finger or stylus', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 11)),
+                ])),
+                CustomPaint(size: Size.infinite, painter: SignaturePainter(strokes: _strokes, active: _active, color: _color, thickness: _width)),
+                const Positioned(left: 18, right: 18, bottom: 43, child: Divider(color: Color(0xFFE2E8F0), height: 1)),
+                const Positioned(left: 18, bottom: 19, child: Text('SIGNATURE', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 8, letterSpacing: 2, fontWeight: FontWeight.w800))),
+              ]),
+            )),
+          ),
+        )),
+        const SizedBox(height: 14),
+        _controlPanel(),
+        const SizedBox(height: 13),
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(onPressed: _clear, icon: const Icon(Icons.refresh_rounded), label: const Text('Clear'),
+              style: OutlinedButton.styleFrom(foregroundColor: navy, minimumSize: const Size(0, 52), side: const BorderSide(color: Color(0xFFDDE3F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))))),
+          const SizedBox(width: 11),
+          Expanded(flex: 2, child: SizedBox(height: 52, child: ElevatedButton.icon(onPressed: _save, icon: const Icon(Icons.arrow_forward_rounded),
+              label: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(backgroundColor: violet, foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)))))),
+        ]),
+      ]),
+    )),
+  );
+  Widget _controlPanel() => Container(padding: const EdgeInsets.fromLTRB(14, 12, 14, 5),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE7EBF3))),
+      child: Column(children: [
+        Row(children: [const Text('Pen color', style: TextStyle(color: navy, fontSize: 12, fontWeight: FontWeight.w800)), const Spacer(),
+          _Dot(color: navy, selected: _color == navy, onTap: () => setState(() => _color = navy)),
+          _Dot(color: const Color(0xFF2563EB), selected: _color == const Color(0xFF2563EB), onTap: () => setState(() => _color = const Color(0xFF2563EB))),
+          _Dot(color: teal, selected: _color == teal, onTap: () => setState(() => _color = teal)),
+          _Dot(color: const Color(0xFFDC2626), selected: _color == const Color(0xFFDC2626), onTap: () => setState(() => _color = const Color(0xFFDC2626))),
+        ]),
+        Row(children: [const Text('Pen thickness', style: TextStyle(color: navy, fontSize: 12, fontWeight: FontWeight.w800)),
+          const Spacer(), Text('${_width.toStringAsFixed(1)} px', style: const TextStyle(color: Color(0xFF64748B), fontSize: 11))]),
+        Slider(value: _width, min: 1.5, max: 7, divisions: 11, activeColor: violet, onChanged: (v) => setState(() => _width = v)),
+      ]));
+}
+class _Dot extends StatelessWidget {
+  final Color color; final bool selected; final VoidCallback onTap;
+  const _Dot({required this.color, required this.selected, required this.onTap});
+  @override
+  Widget build(BuildContext context) => GestureDetector(onTap: onTap,
+      child: Container(width: 29, height: 29, margin: const EdgeInsets.only(left: 9),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle,
+              border: Border.all(color: selected ? const Color(0xFFCBD5E1) : Colors.transparent, width: 3)),
+          child: selected ? const Icon(Icons.check, size: 14, color: Colors.white) : null));
+}
+
+class SignaturePainter extends CustomPainter {
+  final List<List<Offset>> strokes; final List<Offset> active; final Color color; final double thickness;
+  SignaturePainter({required this.strokes, required this.active, required this.color, required this.thickness});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dots = Paint()..color = const Color(0xFFF1F5F9);
+    for (double x = 20; x < size.width; x += 28) {
+      for (double y = 18; y < size.height; y += 28) { canvas.drawCircle(Offset(x, y), .65, dots); }
+    }
+    final pen = Paint()..color = color..strokeWidth = thickness..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round..style = PaintingStyle.stroke;
+    for (final stroke in [...strokes, if (active.isNotEmpty) active]) {
+      if (stroke.isEmpty) continue;
+      if (stroke.length == 1) { canvas.drawCircle(stroke.first, thickness / 2, Paint()..color = color); continue; }
+      final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
+      for (final point in stroke.skip(1)) { path.lineTo(point.dx, point.dy); }
+      canvas.drawPath(path, pen);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant SignaturePainter old) => old.strokes != strokes || old.active != active || old.color != color || old.thickness != thickness;
+}
